@@ -22,15 +22,18 @@ exports.cssLoaders = function (options) {
         loader = loader + '-loader'
         extraParamChar = '?'
       }
-      return loader + (options.sourceMap ? extraParamChar + 'sourceMap' : '')
-    }).join('!')
+      return { loader: loader + (options.sourceMap ? extraParamChar + 'sourceMap' : '') }
+    })
 
     // Extract CSS when that option is specified
     // (which is the case during production build)
     if (options.extract) {
-      return ExtractTextPlugin.extract('vue-style-loader', sourceLoader)
+      return ExtractTextPlugin.extract({
+        fallbackLoader: 'vue-style-loader',
+        loader: sourceLoader
+      })
     } else {
-      return ['vue-style-loader', sourceLoader].join('!')
+      return [{ loader: 'vue-style-loader' }].concat(sourceLoader)
     }
   }
 
@@ -46,6 +49,17 @@ exports.cssLoaders = function (options) {
   }
 }
 
+// Workaround for vue-loader
+exports.cssLoadersString = function (options) {
+  var output = []
+  var loaders = exports.cssLoaders(options)
+  for (var extension in loaders) {
+    var loader = loaders[extension]
+    output.push(loader.loader)
+  }
+  return output.join('!')
+}
+
 // Generate loaders for standalone style files (outside of .vue)
 exports.styleLoaders = function (options) {
   var output = []
@@ -54,7 +68,7 @@ exports.styleLoaders = function (options) {
     var loader = loaders[extension]
     output.push({
       test: new RegExp('\\.' + extension + '$'),
-      loader: loader
+      use: loader
     })
   }
   return output
